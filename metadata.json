@@ -1,0 +1,6 @@
+{
+  "name": "SSC CGL Practice",
+  "description": "Clean, offline SSC CGL practice app with 4-tab bottom navigation (Home, Subjects, Practice, Notes), full subject-topic navigation, 20 practice questions, palette navigation, and result analysis.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
