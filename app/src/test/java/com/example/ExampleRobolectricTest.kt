@@ -357,5 +357,84 @@ class ExampleRobolectricTest {
     composeTestRule.onNodeWithTag("test_card_mock").assertExists()
     composeTestRule.onNodeWithText("Mock Test").assertExists()
   }
+
+  @Test
+  fun `room database seeds and fetches 5 reasoning analogy questions correctly`() = kotlinx.coroutines.runBlocking {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    val inMemoryDb = androidx.room.Room.inMemoryDatabaseBuilder(
+      context,
+      com.example.data.local.AppDatabase::class.java
+    ).allowMainThreadQueries().build()
+
+    val repo = com.example.data.local.SscLocalRepository(inMemoryDb)
+
+    // Initial seeding
+    repo.seedInitialQuestionsIfEmpty()
+
+    val questions = repo.getQuestionsBySubjectAndTopicDirect("Reasoning", "Analogy")
+    assertEquals(5, questions.size)
+
+    // Confirm Q1
+    val q1 = questions[0]
+    assertEquals("House : Rent :: Capital : ?", q1.questionText)
+    assertEquals("Interest", q1.optionA)
+    assertEquals("Investment", q1.optionB)
+    assertEquals("Country", q1.optionC)
+    assertEquals("Money", q1.optionD)
+    assertEquals(1, q1.correctOption)
+    assertEquals("house rent कमाता है, capital interest कमाता है.", q1.explanation)
+    assertEquals("Reasoning", q1.subject)
+    assertEquals("Analogy", q1.topic)
+    assertEquals("Easy", q1.difficulty)
+    assertEquals("SSC KIRAN REASONING pdf", q1.examName)
+    assertEquals(null, q1.year)
+
+    // Confirm Q2
+    val q2 = questions[1]
+    assertEquals("NUMBER : UNBMRE :: GHOST : ?", q2.questionText)
+    assertEquals("HOGST", q2.optionA)
+    assertEquals("HOGTS", q2.optionB)
+    assertEquals("HGSOT", q2.optionC)
+    assertEquals("HGOST", q2.optionD)
+    assertEquals(3, q2.correctOption)
+    assertEquals("letters को pairwise swap किया गया है.", q2.explanation)
+
+    // Confirm Q3
+    val q3 = questions[2]
+    assertEquals("18 : 30 :: 36 : ?", q3.questionText)
+    assertEquals("64", q3.optionA)
+    assertEquals("66", q3.optionB)
+    assertEquals("54", q3.optionC)
+    assertEquals("62", q3.optionD)
+    assertEquals(2, q3.correctOption)
+    assertEquals("multiply by 2, फिर 6 घटाओ.", q3.explanation)
+
+    // Confirm Q4
+    val q4 = questions[3]
+    assertEquals("Find the set most like (4,10,15).", q4.questionText)
+    assertEquals("(3,6,12)", q4.optionA)
+    assertEquals("(2,8,10)", q4.optionB)
+    assertEquals("(5,12,18)", q4.optionC)
+    assertEquals("(7,10,18)", q4.optionD)
+    assertEquals(3, q4.correctOption)
+    assertEquals("+6 then +5, next +7 then +6.", q4.explanation)
+
+    // Confirm Q5
+    val q5 = questions[4]
+    assertEquals("set most like (6,36,63).", q5.questionText)
+    assertEquals("(7,49,98)", q5.optionA)
+    assertEquals("(8,64,46)", q5.optionB)
+    assertEquals("(9,84,45)", q5.optionC)
+    assertEquals("(11,111,84)", q5.optionD)
+    assertEquals(2, q5.correctOption)
+    assertEquals("number squared करो, फिर उसके digits को reverse करो.", q5.explanation)
+
+    // Test re-initialization causes no duplicates
+    repo.seedInitialQuestionsIfEmpty()
+    val recheck = repo.getQuestionsBySubjectAndTopicDirect("Reasoning", "Analogy")
+    assertEquals(5, recheck.size)
+
+    inMemoryDb.close()
+  }
 }
 

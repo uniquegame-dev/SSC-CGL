@@ -24,7 +24,8 @@ data class PracticeQuestion(
     val subjectTitle: String,
     val topicTitle: String,
     val subtopicTitle: String,
-    val subtopicId: String
+    val subtopicId: String,
+    val shortcutMethod: String? = null
 )
 
 data class UserQuestionState(
@@ -99,5 +100,8 @@ data class CustomTestResult(
     val accuracyPercent: Double,
     val totalTimeSeconds: Long,
     val isTimed: Boolean,
-    val subjectBreakdown: List<SubjectTestPerformance>
+    val subjectBreakdown: List<SubjectTestPerformance>,
+    val negativeMarksLost: Double = 0.0,
+    val averageTimePerQuestionSeconds: Double = 0.0,
+    val questionReviews: List<QuestionReviewItem> = emptyList()
 )

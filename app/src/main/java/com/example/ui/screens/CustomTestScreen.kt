@@ -86,6 +86,7 @@ import com.example.data.models.CustomTestResult
 import com.example.data.models.Difficulty
 import com.example.data.models.PaletteState
 import com.example.data.models.PracticeQuestion
+import com.example.data.models.QuestionReviewItem
 import com.example.data.models.SubjectTestPerformance
 import com.example.data.models.UserQuestionState
 import com.example.ui.theme.BorderLight
@@ -109,6 +110,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun CustomTestScreen(
+    testTitle: String = "Custom Test",
     selectedSubjectIds: List<String>,
     isTimed: Boolean,
     onTestFinished: (CustomTestResult) -> Unit,
@@ -225,6 +227,25 @@ fun CustomTestScreen(
         val accuracy = if (totalAttempted > 0) (totalCorrect.toDouble() / totalAttempted) * 100.0 else 0.0
 
         val totalTestTime = if (isTimed) (totalTimeSeconds - timeRemainingSeconds) else elapsedSeconds
+        val negativeMarksLost = totalWrong * 0.5
+        val avgTimePerQuestion = if (totalQuestions > 0) totalTestTime.toDouble() / totalQuestions else 0.0
+
+        val questionReviews = questions.map { q ->
+            val state = userAnswers[q.id]
+            val selectedOption = state?.selectedOptionIndex
+            val isAttempted = selectedOption != null
+            val isCorrect = selectedOption == q.correctOptionIndex
+            val timeSpent = state?.timeSpentSeconds ?: if (totalQuestions > 0) (totalTestTime / totalQuestions) else 0L
+
+            QuestionReviewItem(
+                question = q,
+                selectedOptionIndex = selectedOption,
+                correctOptionIndex = q.correctOptionIndex,
+                isCorrect = isCorrect,
+                isAttempted = isAttempted,
+                timeSpentSeconds = timeSpent
+            )
+        }
 
         val result = CustomTestResult(
             selectedSubjectTitles = subjectPerformances.map { it.subjectTitle },
@@ -238,16 +259,24 @@ fun CustomTestScreen(
             accuracyPercent = accuracy,
             totalTimeSeconds = totalTestTime,
             isTimed = isTimed,
-            subjectBreakdown = subjectPerformances
+            subjectBreakdown = subjectPerformances,
+            negativeMarksLost = negativeMarksLost,
+            averageTimePerQuestionSeconds = avgTimePerQuestion,
+            questionReviews = questionReviews
         )
 
         onTestFinished(result)
     }
 
     // Timer effect
-    LaunchedEffect(isTimerRunning, isTimed) {
+    LaunchedEffect(isTimerRunning, isTimed, currentQuestionIndex) {
         while (isTimerRunning) {
             delay(1000L)
+            val currentQ = questions.getOrNull(currentQuestionIndex)
+            if (currentQ != null) {
+                val state = userAnswers[currentQ.id] ?: UserQuestionState(currentQ.id)
+                userAnswers[currentQ.id] = state.copy(timeSpentSeconds = state.timeSpentSeconds + 1L)
+            }
             if (isTimed) {
                 if (timeRemainingSeconds > 0) {
                     timeRemainingSeconds--
@@ -276,7 +305,7 @@ fun CustomTestScreen(
                 title = {
                     Column {
                         Text(
-                            text = "Custom Test",
+                            text = testTitle,
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                             color = TextDarkHeading
                         )

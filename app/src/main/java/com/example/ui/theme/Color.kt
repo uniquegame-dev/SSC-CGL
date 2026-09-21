@@ -63,6 +63,11 @@ val UnattemptedGray = Color(0xFF64748B)
 val UnattemptedGrayBg = Color(0xFFF1F5F9)
 val UnattemptedGrayBorder = Color(0xFFE2E8F0)
 
+val ShortcutAmberBg = Color(0xFFFFFBEB)
+val ShortcutAmberBorder = Color(0xFFFDE68A)
+val ShortcutAmberText = Color(0xFFB45309)
+val ShortcutAmberIcon = Color(0xFFD97706)
+
 // Difficulty Colors
 val DifficultyEasy = Color(0xFF059669)
 val DifficultyEasyBg = Color(0xFFECFDF5)

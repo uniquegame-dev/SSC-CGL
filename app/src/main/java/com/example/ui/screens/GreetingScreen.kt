@@ -90,7 +90,7 @@ fun GreetingScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Subject Practice",
+                        text = "SSC CGL Subject Practice",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         color = TextDarkHeading
                     )

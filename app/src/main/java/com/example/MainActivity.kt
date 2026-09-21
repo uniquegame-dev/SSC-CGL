@@ -58,14 +58,18 @@ import com.example.ui.screens.CustomTestScreen
 import com.example.ui.screens.CustomTestSetupScreen
 import com.example.ui.screens.GreetingScreen
 import com.example.ui.screens.HomeScreen
+import com.example.ui.screens.MockTestOverviewScreen
 import com.example.ui.screens.NotesTabScreen
 import com.example.ui.screens.PracticeQuestionScreen
+import com.example.ui.screens.PyqYearDetailScreen
+import com.example.ui.screens.PyqYearsScreen
 import com.example.ui.screens.ResultAnalysisScreen
 import com.example.ui.screens.SubtopicsScreen
 import com.example.ui.screens.TestTabScreen
 import com.example.ui.screens.TopicsScreen
 import com.example.ui.screens.WelcomeScreen
 import com.example.ui.theme.BorderLight
+import com.example.ui.theme.LightBackground
 import com.example.ui.theme.LightCardBackgroundVariant
 import com.example.ui.theme.LightSurface
 import com.example.ui.theme.MyApplicationTheme
@@ -92,6 +96,9 @@ enum class AppScreen {
   SUBTOPICS,
   PRACTICE,
   RESULT,
+  MOCK_TEST_OVERVIEW,
+  PYQ_YEARS,
+  PYQ_YEAR_DETAIL,
   CUSTOM_TEST_SETUP,
   CUSTOM_TEST_RUN,
   CUSTOM_TEST_RESULT
@@ -119,10 +126,13 @@ fun SscCglPracticeApp(modifier: Modifier = Modifier) {
   var selectedSubtopicId by rememberSaveable { mutableStateOf<String?>(null) }
   var practiceResult by remember { mutableStateOf<PracticeSessionResult?>(null) }
 
-  // Custom Test state
+  // Custom Test & Mock Test state
   var customTestSelectedSubjects by rememberSaveable { mutableStateOf<List<String>>(emptyList()) }
   var customTestIsTimed by rememberSaveable { mutableStateOf(true) }
   var customTestResult by remember { mutableStateOf<CustomTestResult?>(null) }
+  var selectedPyqYear by rememberSaveable { mutableStateOf<Int?>(null) }
+  var activeTestTitle by rememberSaveable { mutableStateOf("Custom Test") }
+  var activeTestSourceScreen by rememberSaveable { mutableStateOf(AppScreen.CUSTOM_TEST_SETUP) }
 
   val currentSubject = selectedSubjectId?.let { SscDataRepository.getSubjectById(it) }
   val currentTopic = if (selectedSubjectId != null && selectedTopicId != null) {
@@ -135,12 +145,27 @@ fun SscCglPracticeApp(modifier: Modifier = Modifier) {
   // System back button handling for hierarchical navigation
   BackHandler(enabled = currentScreen != AppScreen.WELCOME) {
     when (currentScreen) {
-      AppScreen.CUSTOM_TEST_RESULT -> {
+      AppScreen.PYQ_YEAR_DETAIL -> {
+        currentScreen = AppScreen.PYQ_YEARS
+      }
+      AppScreen.PYQ_YEARS -> {
         currentScreen = AppScreen.MAIN_TABS
         currentTab = BottomNavTab.TEST
       }
+      AppScreen.MOCK_TEST_OVERVIEW -> {
+        currentScreen = AppScreen.MAIN_TABS
+        currentTab = BottomNavTab.TEST
+      }
+      AppScreen.CUSTOM_TEST_RESULT -> {
+        if (activeTestSourceScreen == AppScreen.MOCK_TEST_OVERVIEW) {
+          currentScreen = AppScreen.MOCK_TEST_OVERVIEW
+        } else {
+          currentScreen = AppScreen.MAIN_TABS
+          currentTab = BottomNavTab.TEST
+        }
+      }
       AppScreen.CUSTOM_TEST_RUN -> {
-        currentScreen = AppScreen.CUSTOM_TEST_SETUP
+        currentScreen = activeTestSourceScreen
       }
       AppScreen.CUSTOM_TEST_SETUP -> {
         currentScreen = AppScreen.MAIN_TABS
@@ -178,7 +203,10 @@ fun SscCglPracticeApp(modifier: Modifier = Modifier) {
     }
   }
 
-  Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
+  Surface(
+    color = LightBackground,
+    modifier = modifier.fillMaxSize()
+  ) {
     AnimatedContent(
       targetState = currentScreen,
       transitionSpec = {
@@ -193,9 +221,7 @@ fun SscCglPracticeApp(modifier: Modifier = Modifier) {
         }
       },
       label = "ScreenTransition",
-      modifier = Modifier
-        .fillMaxSize()
-        .padding(innerPadding)
+      modifier = Modifier.fillMaxSize()
     ) { screen ->
       when (screen) {
         AppScreen.WELCOME -> {
@@ -218,12 +244,13 @@ fun SscCglPracticeApp(modifier: Modifier = Modifier) {
                 }
               )
             },
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
             modifier = Modifier.fillMaxSize()
           ) { tabInnerPadding ->
             Box(
               modifier = Modifier
                 .fillMaxSize()
-                .padding(tabInnerPadding)
+                .padding(bottom = tabInnerPadding.calculateBottomPadding())
             ) {
               when (currentTab) {
                 BottomNavTab.HOME -> {
@@ -234,6 +261,9 @@ fun SscCglPracticeApp(modifier: Modifier = Modifier) {
                     },
                     onNavigateToTest = {
                       currentTab = BottomNavTab.TEST
+                    },
+                    onNavigateToNotes = {
+                      currentTab = BottomNavTab.NOTES
                     }
                   )
                 }
@@ -253,6 +283,12 @@ fun SscCglPracticeApp(modifier: Modifier = Modifier) {
                   TestTabScreen(
                     onNavigateToCustomTest = {
                       currentScreen = AppScreen.CUSTOM_TEST_SETUP
+                    },
+                    onNavigateToPyqTest = {
+                      currentScreen = AppScreen.PYQ_YEARS
+                    },
+                    onNavigateToMockTest = {
+                      currentScreen = AppScreen.MOCK_TEST_OVERVIEW
                     }
                   )
                 }
@@ -359,9 +395,48 @@ fun SscCglPracticeApp(modifier: Modifier = Modifier) {
             currentScreen = AppScreen.TOPICS
           }
         }
+        AppScreen.MOCK_TEST_OVERVIEW -> {
+          MockTestOverviewScreen(
+            onStartTest = { defaultLanguage ->
+              // SSC CGL Tier 1 standard: 4 subjects, 25 Qs each = 100 Qs, 60 minutes
+              activeTestTitle = "Mock Test"
+              activeTestSourceScreen = AppScreen.MOCK_TEST_OVERVIEW
+              customTestSelectedSubjects = listOf("reasoning", "gk_ga", "maths", "english")
+              customTestIsTimed = true
+              currentScreen = AppScreen.CUSTOM_TEST_RUN
+            },
+            onBack = {
+              currentScreen = AppScreen.MAIN_TABS
+              currentTab = BottomNavTab.TEST
+            }
+          )
+        }
+        AppScreen.PYQ_YEARS -> {
+          PyqYearsScreen(
+            onSelectYear = { year ->
+              selectedPyqYear = year
+              currentScreen = AppScreen.PYQ_YEAR_DETAIL
+            },
+            onBack = {
+              currentScreen = AppScreen.MAIN_TABS
+              currentTab = BottomNavTab.TEST
+            }
+          )
+        }
+        AppScreen.PYQ_YEAR_DETAIL -> {
+          val yearToDisplay = selectedPyqYear ?: 2024
+          PyqYearDetailScreen(
+            year = yearToDisplay,
+            onBack = {
+              currentScreen = AppScreen.PYQ_YEARS
+            }
+          )
+        }
         AppScreen.CUSTOM_TEST_SETUP -> {
           CustomTestSetupScreen(
             onStartTest = { selectedSubjects, isTimed ->
+              activeTestTitle = "Custom Test"
+              activeTestSourceScreen = AppScreen.CUSTOM_TEST_SETUP
               customTestSelectedSubjects = selectedSubjects
               customTestIsTimed = isTimed
               currentScreen = AppScreen.CUSTOM_TEST_RUN
@@ -374,6 +449,7 @@ fun SscCglPracticeApp(modifier: Modifier = Modifier) {
         }
         AppScreen.CUSTOM_TEST_RUN -> {
           CustomTestScreen(
+            testTitle = activeTestTitle,
             selectedSubjectIds = customTestSelectedSubjects,
             isTimed = customTestIsTimed,
             onTestFinished = { result ->
@@ -381,7 +457,7 @@ fun SscCglPracticeApp(modifier: Modifier = Modifier) {
               currentScreen = AppScreen.CUSTOM_TEST_RESULT
             },
             onExit = {
-              currentScreen = AppScreen.CUSTOM_TEST_SETUP
+              currentScreen = activeTestSourceScreen
             }
           )
         }
@@ -394,11 +470,15 @@ fun SscCglPracticeApp(modifier: Modifier = Modifier) {
                 currentScreen = AppScreen.CUSTOM_TEST_RUN
               },
               onNewCustomTest = {
-                currentScreen = AppScreen.CUSTOM_TEST_SETUP
+                currentScreen = activeTestSourceScreen
               },
               onBackToTestMenu = {
-                currentScreen = AppScreen.MAIN_TABS
-                currentTab = BottomNavTab.TEST
+                if (activeTestSourceScreen == AppScreen.MOCK_TEST_OVERVIEW) {
+                  currentScreen = AppScreen.MOCK_TEST_OVERVIEW
+                } else {
+                  currentScreen = AppScreen.MAIN_TABS
+                  currentTab = BottomNavTab.TEST
+                }
               }
             )
           } else {
