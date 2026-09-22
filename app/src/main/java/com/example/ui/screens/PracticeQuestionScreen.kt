@@ -252,7 +252,8 @@ fun PracticeQuestionScreen(
                 correctOptionIndex = q.correctOptionIndex,
                 isCorrect = isCorrect,
                 isAttempted = isAttempted,
-                timeSpentSeconds = timeSpent
+                timeSpentSeconds = timeSpent,
+                isMarkedForReview = resp?.isMarkedForReview == true
             )
         }
 

@@ -15,6 +15,7 @@ enum class PaletteState(val label: String) {
 
 data class PracticeQuestion(
     val id: Int,
+    val roomQuestionId: Long? = null,
     val questionNumber: Int,
     val questionText: String,
     val options: List<String>,
@@ -52,7 +53,8 @@ data class QuestionReviewItem(
     val correctOptionIndex: Int,
     val isCorrect: Boolean,
     val isAttempted: Boolean,
-    val timeSpentSeconds: Long
+    val timeSpentSeconds: Long,
+    val isMarkedForReview: Boolean = false
 )
 
 enum class ReviewFilter(val label: String) {
