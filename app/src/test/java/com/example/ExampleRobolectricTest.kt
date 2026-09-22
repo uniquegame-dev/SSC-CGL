@@ -5,6 +5,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ApplicationProvider
 import com.example.ui.screens.GreetingScreen
@@ -27,6 +28,64 @@ class ExampleRobolectricTest {
     val context = ApplicationProvider.getApplicationContext<Context>()
     val appName = context.getString(R.string.app_name)
     assertEquals("SSC CGL Practice", appName)
+  }
+
+  @Test
+  fun `current affairs filters placeholder data by category and month`() {
+    var backClicked = false
+    composeTestRule.setContent {
+      MyApplicationTheme {
+        com.example.ui.screens.CurrentAffairsDetailScreen(
+          onBack = { backClicked = true }
+        )
+      }
+    }
+
+    val categoryTags = listOf(
+      "sports",
+      "obituaries",
+      "awards_and_honours",
+      "national_appointment",
+      "international_appointment",
+      "national_news",
+      "international_news",
+      "state_news",
+      "index_and_ranking",
+      "events_and_summit",
+      "important_books",
+      "military_exercises",
+      "important_days_and_themes",
+      "science_and_technology",
+      "important_schemes",
+      "miscellaneous"
+    )
+
+    composeTestRule.onNodeWithText("Select Category").assertExists()
+    categoryTags.forEach { tag ->
+      composeTestRule.onNodeWithTag("current_affairs_category_$tag").assertExists()
+    }
+
+    composeTestRule.onNodeWithTag("current_affairs_category_sports").performClick()
+    composeTestRule.onNodeWithText("Select Month").assertExists()
+    listOf(
+      "january", "february", "march", "april", "may", "june", "july", "august", "september"
+    ).forEach { month ->
+      composeTestRule.onNodeWithTag("current_affairs_month_$month").assertExists()
+    }
+
+    composeTestRule.onNodeWithTag("current_affairs_month_september")
+      .performScrollTo()
+      .performClick()
+    composeTestRule.onNodeWithTag("current_affairs_active_filters").assertExists()
+    composeTestRule.onNodeWithText("September • 5 placeholder updates").assertExists()
+    composeTestRule.onNodeWithText(
+      "Preview data only • Real verified current affairs will replace these entries later."
+    ).assertExists()
+
+    composeTestRule.onNodeWithTag("btn_change_current_affairs_filters").performClick()
+    composeTestRule.onNodeWithText("Select Category").assertExists()
+    composeTestRule.onNodeWithTag("btn_back_current_affairs").performClick()
+    assertEquals(true, backClicked)
   }
 
   @Test
@@ -371,7 +430,7 @@ class ExampleRobolectricTest {
     // Initial seeding
     repo.seedInitialQuestionsIfEmpty()
 
-    val questions = repo.getQuestionsBySubjectAndTopicDirect("Reasoning", "Analogy")
+    val questions = repo.getQuestionsBySubjectAndTopicDirect("reasoning", "analogies")
     assertEquals(5, questions.size)
 
     // Confirm Q1
@@ -383,10 +442,10 @@ class ExampleRobolectricTest {
     assertEquals("Money", q1.optionD)
     assertEquals(1, q1.correctOption)
     assertEquals("house rent कमाता है, capital interest कमाता है.", q1.explanation)
-    assertEquals("Reasoning", q1.subject)
-    assertEquals("Analogy", q1.topic)
-    assertEquals("Easy", q1.difficulty)
-    assertEquals("SSC KIRAN REASONING pdf", q1.examName)
+    assertEquals("analogies", q1.topicId)
+    assertEquals(null, q1.subtopicId)
+    assertEquals("EASY", q1.difficulty)
+    assertEquals("Bundled seed", q1.sourceName)
     assertEquals(null, q1.year)
 
     // Confirm Q2
@@ -431,7 +490,7 @@ class ExampleRobolectricTest {
 
     // Test re-initialization causes no duplicates
     repo.seedInitialQuestionsIfEmpty()
-    val recheck = repo.getQuestionsBySubjectAndTopicDirect("Reasoning", "Analogy")
+    val recheck = repo.getQuestionsBySubjectAndTopicDirect("reasoning", "analogies")
     assertEquals(5, recheck.size)
 
     inMemoryDb.close()

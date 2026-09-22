@@ -1,0 +1,1561 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 4,
+    "identityHash": "fd7b25bbac78fc2c310144bf0c113a72",
+    "entities": [
+      {
+        "tableName": "exams",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `code` TEXT NOT NULL, `name` TEXT NOT NULL, `description` TEXT NOT NULL, `is_active` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "code",
+            "columnName": "code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isActive",
+            "columnName": "is_active",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_exams_code",
+            "unique": true,
+            "columnNames": [
+              "code"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_exams_code` ON `${TABLE_NAME}` (`code`)"
+          }
+        ]
+      },
+      {
+        "tableName": "subjects",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `exam_id` TEXT NOT NULL, `name` TEXT NOT NULL, `description` TEXT NOT NULL, `display_order` INTEGER NOT NULL, `is_active` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`exam_id`) REFERENCES `exams`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "examId",
+            "columnName": "exam_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "displayOrder",
+            "columnName": "display_order",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isActive",
+            "columnName": "is_active",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_subjects_exam_id",
+            "unique": false,
+            "columnNames": [
+              "exam_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_subjects_exam_id` ON `${TABLE_NAME}` (`exam_id`)"
+          },
+          {
+            "name": "index_subjects_exam_id_name",
+            "unique": true,
+            "columnNames": [
+              "exam_id",
+              "name"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_subjects_exam_id_name` ON `${TABLE_NAME}` (`exam_id`, `name`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "exams",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "exam_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "topics",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `subject_id` TEXT NOT NULL, `name` TEXT NOT NULL, `description` TEXT NOT NULL, `display_order` INTEGER NOT NULL, `is_active` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`subject_id`) REFERENCES `subjects`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "subjectId",
+            "columnName": "subject_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "displayOrder",
+            "columnName": "display_order",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isActive",
+            "columnName": "is_active",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_topics_subject_id",
+            "unique": false,
+            "columnNames": [
+              "subject_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_topics_subject_id` ON `${TABLE_NAME}` (`subject_id`)"
+          },
+          {
+            "name": "index_topics_subject_id_name",
+            "unique": true,
+            "columnNames": [
+              "subject_id",
+              "name"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_topics_subject_id_name` ON `${TABLE_NAME}` (`subject_id`, `name`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "subjects",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "subject_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "subtopics",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `topic_id` TEXT NOT NULL, `name` TEXT NOT NULL, `description` TEXT NOT NULL, `display_order` INTEGER NOT NULL, `is_active` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`topic_id`) REFERENCES `topics`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "topicId",
+            "columnName": "topic_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "displayOrder",
+            "columnName": "display_order",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isActive",
+            "columnName": "is_active",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_subtopics_topic_id",
+            "unique": false,
+            "columnNames": [
+              "topic_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_subtopics_topic_id` ON `${TABLE_NAME}` (`topic_id`)"
+          },
+          {
+            "name": "index_subtopics_topic_id_name",
+            "unique": true,
+            "columnNames": [
+              "topic_id",
+              "name"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_subtopics_topic_id_name` ON `${TABLE_NAME}` (`topic_id`, `name`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "topics",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "topic_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "questions",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `content_key` TEXT NOT NULL, `topic_id` TEXT NOT NULL, `subtopic_id` TEXT, `question_text` TEXT NOT NULL, `option_a` TEXT NOT NULL, `option_b` TEXT NOT NULL, `option_c` TEXT NOT NULL, `option_d` TEXT NOT NULL, `correct_option` INTEGER NOT NULL, `explanation` TEXT NOT NULL, `difficulty` TEXT NOT NULL, `source_type` TEXT NOT NULL, `source_name` TEXT, `year` INTEGER, `exam_date` TEXT, `shift` TEXT, `language` TEXT NOT NULL, `is_active` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, FOREIGN KEY(`topic_id`) REFERENCES `topics`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT , FOREIGN KEY(`subtopic_id`) REFERENCES `subtopics`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contentKey",
+            "columnName": "content_key",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "topicId",
+            "columnName": "topic_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "subtopicId",
+            "columnName": "subtopic_id",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "questionText",
+            "columnName": "question_text",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "optionA",
+            "columnName": "option_a",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "optionB",
+            "columnName": "option_b",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "optionC",
+            "columnName": "option_c",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "optionD",
+            "columnName": "option_d",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "correctOption",
+            "columnName": "correct_option",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "explanation",
+            "columnName": "explanation",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "difficulty",
+            "columnName": "difficulty",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceType",
+            "columnName": "source_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceName",
+            "columnName": "source_name",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "year",
+            "columnName": "year",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "examDate",
+            "columnName": "exam_date",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "shift",
+            "columnName": "shift",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "language",
+            "columnName": "language",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isActive",
+            "columnName": "is_active",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updated_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_questions_content_key",
+            "unique": true,
+            "columnNames": [
+              "content_key"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_questions_content_key` ON `${TABLE_NAME}` (`content_key`)"
+          },
+          {
+            "name": "index_questions_topic_id",
+            "unique": false,
+            "columnNames": [
+              "topic_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_questions_topic_id` ON `${TABLE_NAME}` (`topic_id`)"
+          },
+          {
+            "name": "index_questions_subtopic_id",
+            "unique": false,
+            "columnNames": [
+              "subtopic_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_questions_subtopic_id` ON `${TABLE_NAME}` (`subtopic_id`)"
+          },
+          {
+            "name": "index_questions_source_type",
+            "unique": false,
+            "columnNames": [
+              "source_type"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_questions_source_type` ON `${TABLE_NAME}` (`source_type`)"
+          },
+          {
+            "name": "index_questions_year_shift",
+            "unique": false,
+            "columnNames": [
+              "year",
+              "shift"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_questions_year_shift` ON `${TABLE_NAME}` (`year`, `shift`)"
+          },
+          {
+            "name": "index_questions_difficulty",
+            "unique": false,
+            "columnNames": [
+              "difficulty"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_questions_difficulty` ON `${TABLE_NAME}` (`difficulty`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "topics",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "topic_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "subtopics",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "subtopic_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "tests",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `exam_id` TEXT NOT NULL, `subject_id` TEXT, `topic_id` TEXT, `subtopic_id` TEXT, `title` TEXT NOT NULL, `test_type` TEXT NOT NULL, `year` INTEGER, `exam_date` TEXT, `shift` TEXT, `total_questions` INTEGER NOT NULL, `duration_minutes` INTEGER NOT NULL, `total_marks` REAL NOT NULL, `positive_marks` REAL NOT NULL, `negative_marks` REAL NOT NULL, `created_at` INTEGER NOT NULL, FOREIGN KEY(`exam_id`) REFERENCES `exams`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT , FOREIGN KEY(`subject_id`) REFERENCES `subjects`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`topic_id`) REFERENCES `topics`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`subtopic_id`) REFERENCES `subtopics`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "examId",
+            "columnName": "exam_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "subjectId",
+            "columnName": "subject_id",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "topicId",
+            "columnName": "topic_id",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "subtopicId",
+            "columnName": "subtopic_id",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "testType",
+            "columnName": "test_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "year",
+            "columnName": "year",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "examDate",
+            "columnName": "exam_date",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "shift",
+            "columnName": "shift",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "totalQuestions",
+            "columnName": "total_questions",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "durationMinutes",
+            "columnName": "duration_minutes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalMarks",
+            "columnName": "total_marks",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "positiveMarks",
+            "columnName": "positive_marks",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "negativeMarks",
+            "columnName": "negative_marks",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_tests_exam_id",
+            "unique": false,
+            "columnNames": [
+              "exam_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tests_exam_id` ON `${TABLE_NAME}` (`exam_id`)"
+          },
+          {
+            "name": "index_tests_subject_id",
+            "unique": false,
+            "columnNames": [
+              "subject_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tests_subject_id` ON `${TABLE_NAME}` (`subject_id`)"
+          },
+          {
+            "name": "index_tests_topic_id",
+            "unique": false,
+            "columnNames": [
+              "topic_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tests_topic_id` ON `${TABLE_NAME}` (`topic_id`)"
+          },
+          {
+            "name": "index_tests_subtopic_id",
+            "unique": false,
+            "columnNames": [
+              "subtopic_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tests_subtopic_id` ON `${TABLE_NAME}` (`subtopic_id`)"
+          },
+          {
+            "name": "index_tests_test_type",
+            "unique": false,
+            "columnNames": [
+              "test_type"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tests_test_type` ON `${TABLE_NAME}` (`test_type`)"
+          },
+          {
+            "name": "index_tests_year_shift",
+            "unique": false,
+            "columnNames": [
+              "year",
+              "shift"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tests_year_shift` ON `${TABLE_NAME}` (`year`, `shift`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "exams",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "exam_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "subjects",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "subject_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "topics",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "topic_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "subtopics",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "subtopic_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "test_questions",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`test_id` INTEGER NOT NULL, `question_id` INTEGER NOT NULL, `section_order` INTEGER NOT NULL, `question_order` INTEGER NOT NULL, `positive_marks` REAL, `negative_marks` REAL, PRIMARY KEY(`test_id`, `question_id`), FOREIGN KEY(`test_id`) REFERENCES `tests`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`question_id`) REFERENCES `questions`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
+        "fields": [
+          {
+            "fieldPath": "testId",
+            "columnName": "test_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "questionId",
+            "columnName": "question_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sectionOrder",
+            "columnName": "section_order",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "questionOrder",
+            "columnName": "question_order",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "positiveMarks",
+            "columnName": "positive_marks",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "negativeMarks",
+            "columnName": "negative_marks",
+            "affinity": "REAL"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "test_id",
+            "question_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_test_questions_question_id",
+            "unique": false,
+            "columnNames": [
+              "question_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_test_questions_question_id` ON `${TABLE_NAME}` (`question_id`)"
+          },
+          {
+            "name": "index_test_questions_test_id_question_order",
+            "unique": true,
+            "columnNames": [
+              "test_id",
+              "question_order"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_test_questions_test_id_question_order` ON `${TABLE_NAME}` (`test_id`, `question_order`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "tests",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "test_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "questions",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "question_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "attempts",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `test_id` INTEGER, `subject_id` TEXT, `topic_id` TEXT, `subtopic_id` TEXT, `test_title` TEXT NOT NULL, `attempt_type` TEXT NOT NULL, `start_time` INTEGER NOT NULL, `end_time` INTEGER, `time_taken_seconds` INTEGER NOT NULL, `total_questions` INTEGER NOT NULL, `attempted_count` INTEGER NOT NULL, `correct_count` INTEGER NOT NULL, `wrong_count` INTEGER NOT NULL, `unattempted_count` INTEGER NOT NULL, `score` REAL NOT NULL, `max_score` REAL NOT NULL, `accuracy` REAL NOT NULL, `is_completed` INTEGER NOT NULL, FOREIGN KEY(`test_id`) REFERENCES `tests`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`subject_id`) REFERENCES `subjects`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`topic_id`) REFERENCES `topics`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`subtopic_id`) REFERENCES `subtopics`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "testId",
+            "columnName": "test_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "subjectId",
+            "columnName": "subject_id",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "topicId",
+            "columnName": "topic_id",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "subtopicId",
+            "columnName": "subtopic_id",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "testTitle",
+            "columnName": "test_title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "attemptType",
+            "columnName": "attempt_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startTime",
+            "columnName": "start_time",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "endTime",
+            "columnName": "end_time",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "timeTakenSeconds",
+            "columnName": "time_taken_seconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalQuestions",
+            "columnName": "total_questions",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "attemptedCount",
+            "columnName": "attempted_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "correctCount",
+            "columnName": "correct_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "wrongCount",
+            "columnName": "wrong_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "unattemptedCount",
+            "columnName": "unattempted_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "score",
+            "columnName": "score",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "maxScore",
+            "columnName": "max_score",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "accuracy",
+            "columnName": "accuracy",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isCompleted",
+            "columnName": "is_completed",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_attempts_test_id",
+            "unique": false,
+            "columnNames": [
+              "test_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_attempts_test_id` ON `${TABLE_NAME}` (`test_id`)"
+          },
+          {
+            "name": "index_attempts_subject_id",
+            "unique": false,
+            "columnNames": [
+              "subject_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_attempts_subject_id` ON `${TABLE_NAME}` (`subject_id`)"
+          },
+          {
+            "name": "index_attempts_topic_id",
+            "unique": false,
+            "columnNames": [
+              "topic_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_attempts_topic_id` ON `${TABLE_NAME}` (`topic_id`)"
+          },
+          {
+            "name": "index_attempts_subtopic_id",
+            "unique": false,
+            "columnNames": [
+              "subtopic_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_attempts_subtopic_id` ON `${TABLE_NAME}` (`subtopic_id`)"
+          },
+          {
+            "name": "index_attempts_start_time",
+            "unique": false,
+            "columnNames": [
+              "start_time"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_attempts_start_time` ON `${TABLE_NAME}` (`start_time`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "tests",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "test_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "subjects",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "subject_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "topics",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "topic_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "subtopics",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "subtopic_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "attempt_answers",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`attempt_id` INTEGER NOT NULL, `question_id` INTEGER NOT NULL, `answer_order` INTEGER NOT NULL, `selected_option` INTEGER, `correct_option` INTEGER NOT NULL, `is_correct` INTEGER NOT NULL, `is_marked_for_review` INTEGER NOT NULL, `time_spent_seconds` INTEGER NOT NULL, `awarded_marks` REAL NOT NULL, PRIMARY KEY(`attempt_id`, `question_id`), FOREIGN KEY(`attempt_id`) REFERENCES `attempts`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`question_id`) REFERENCES `questions`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
+        "fields": [
+          {
+            "fieldPath": "attemptId",
+            "columnName": "attempt_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "questionId",
+            "columnName": "question_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "answerOrder",
+            "columnName": "answer_order",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "selectedOption",
+            "columnName": "selected_option",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "correctOption",
+            "columnName": "correct_option",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isCorrect",
+            "columnName": "is_correct",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isMarkedForReview",
+            "columnName": "is_marked_for_review",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timeSpentSeconds",
+            "columnName": "time_spent_seconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "awardedMarks",
+            "columnName": "awarded_marks",
+            "affinity": "REAL",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "attempt_id",
+            "question_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_attempt_answers_question_id",
+            "unique": false,
+            "columnNames": [
+              "question_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_attempt_answers_question_id` ON `${TABLE_NAME}` (`question_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "attempts",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "attempt_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "questions",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "question_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "bookmarks",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`question_id` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, PRIMARY KEY(`question_id`), FOREIGN KEY(`question_id`) REFERENCES `questions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "questionId",
+            "columnName": "question_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "question_id"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "questions",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "question_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "question_progress",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`question_id` INTEGER NOT NULL, `attempt_count` INTEGER NOT NULL, `correct_count` INTEGER NOT NULL, `wrong_count` INTEGER NOT NULL, `skipped_count` INTEGER NOT NULL, `total_time_seconds` INTEGER NOT NULL, `last_attempted_at` INTEGER, `mastery_score` REAL NOT NULL, `needs_revision` INTEGER NOT NULL, PRIMARY KEY(`question_id`), FOREIGN KEY(`question_id`) REFERENCES `questions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "questionId",
+            "columnName": "question_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "attemptCount",
+            "columnName": "attempt_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "correctCount",
+            "columnName": "correct_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "wrongCount",
+            "columnName": "wrong_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "skippedCount",
+            "columnName": "skipped_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalTimeSeconds",
+            "columnName": "total_time_seconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastAttemptedAt",
+            "columnName": "last_attempted_at",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "masteryScore",
+            "columnName": "mastery_score",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "needsRevision",
+            "columnName": "needs_revision",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "question_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_question_progress_revision_mastery",
+            "unique": false,
+            "columnNames": [
+              "needs_revision",
+              "mastery_score"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_question_progress_revision_mastery` ON `${TABLE_NAME}` (`needs_revision`, `mastery_score`)"
+          },
+          {
+            "name": "index_question_progress_last_attempted_at",
+            "unique": false,
+            "columnNames": [
+              "last_attempted_at"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_question_progress_last_attempted_at` ON `${TABLE_NAME}` (`last_attempted_at`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "questions",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "question_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "daily_note_sets",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `type` TEXT NOT NULL, `set_number` INTEGER NOT NULL, `title` TEXT NOT NULL, `total_items` INTEGER NOT NULL, `is_active` INTEGER NOT NULL, `is_completed` INTEGER NOT NULL, `completed_at` INTEGER)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "setNumber",
+            "columnName": "set_number",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalItems",
+            "columnName": "total_items",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isActive",
+            "columnName": "is_active",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isCompleted",
+            "columnName": "is_completed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "completedAt",
+            "columnName": "completed_at",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_daily_note_sets_type_set_number",
+            "unique": true,
+            "columnNames": [
+              "type",
+              "set_number"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_daily_note_sets_type_set_number` ON `${TABLE_NAME}` (`type`, `set_number`)"
+          },
+          {
+            "name": "index_daily_note_sets_type_is_active",
+            "unique": false,
+            "columnNames": [
+              "type",
+              "is_active"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_daily_note_sets_type_is_active` ON `${TABLE_NAME}` (`type`, `is_active`)"
+          }
+        ]
+      },
+      {
+        "tableName": "daily_note_items",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `set_id` INTEGER NOT NULL, `item_order` INTEGER NOT NULL, `word_or_title` TEXT NOT NULL, `phonetic` TEXT NOT NULL, `part_of_speech` TEXT NOT NULL, `meaning` TEXT NOT NULL, `synonym` TEXT NOT NULL, `antonym` TEXT NOT NULL, `example` TEXT NOT NULL, `explanation` TEXT NOT NULL, `fact_date` TEXT NOT NULL, `category` TEXT NOT NULL, FOREIGN KEY(`set_id`) REFERENCES `daily_note_sets`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "setId",
+            "columnName": "set_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "itemOrder",
+            "columnName": "item_order",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "wordOrTitle",
+            "columnName": "word_or_title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "phonetic",
+            "columnName": "phonetic",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "partOfSpeech",
+            "columnName": "part_of_speech",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "meaning",
+            "columnName": "meaning",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "synonym",
+            "columnName": "synonym",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "antonym",
+            "columnName": "antonym",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "example",
+            "columnName": "example",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "explanation",
+            "columnName": "explanation",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "factDate",
+            "columnName": "fact_date",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_daily_note_items_set_id",
+            "unique": false,
+            "columnNames": [
+              "set_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_daily_note_items_set_id` ON `${TABLE_NAME}` (`set_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "daily_note_sets",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "set_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "daily_note_progress",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `set_id` INTEGER NOT NULL, `item_id` INTEGER NOT NULL, `is_completed` INTEGER NOT NULL, `review_later` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, FOREIGN KEY(`set_id`) REFERENCES `daily_note_sets`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`item_id`) REFERENCES `daily_note_items`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "setId",
+            "columnName": "set_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "itemId",
+            "columnName": "item_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isCompleted",
+            "columnName": "is_completed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reviewLater",
+            "columnName": "review_later",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updated_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_daily_note_progress_set_id",
+            "unique": false,
+            "columnNames": [
+              "set_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_daily_note_progress_set_id` ON `${TABLE_NAME}` (`set_id`)"
+          },
+          {
+            "name": "index_daily_note_progress_item_id",
+            "unique": true,
+            "columnNames": [
+              "item_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_daily_note_progress_item_id` ON `${TABLE_NAME}` (`item_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "daily_note_sets",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "set_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "daily_note_items",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "item_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'fd7b25bbac78fc2c310144bf0c113a72')"
+    ]
+  }
+}

@@ -8,29 +8,68 @@ import androidx.room.Transaction
 import androidx.room.Update
 import com.example.data.local.entities.AttemptAnswerEntity
 import com.example.data.local.entities.AttemptEntity
+import com.example.data.local.entities.BookmarkEntity
 import com.example.data.local.entities.DailyNoteItemEntity
 import com.example.data.local.entities.DailyNoteProgressEntity
 import com.example.data.local.entities.DailyNoteSetEntity
+import com.example.data.local.entities.ExamEntity
 import com.example.data.local.entities.QuestionEntity
+import com.example.data.local.entities.QuestionProgressEntity
+import com.example.data.local.entities.SubjectEntity
+import com.example.data.local.entities.SubtopicEntity
 import com.example.data.local.entities.TestEntity
 import com.example.data.local.entities.TestQuestionEntity
+import com.example.data.local.entities.TopicEntity
 import kotlinx.coroutines.flow.Flow
 
-/**
- * Data Access Object for Questions table.
- */
+@Dao
+interface HierarchyDao {
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertExam(exam: ExamEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertSubjects(subjects: List<SubjectEntity>): List<Long>
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertTopics(topics: List<TopicEntity>): List<Long>
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertSubtopics(subtopics: List<SubtopicEntity>): List<Long>
+
+    @Query("SELECT * FROM exams WHERE is_active = 1 ORDER BY name")
+    fun getExams(): Flow<List<ExamEntity>>
+
+    @Query("SELECT * FROM subjects WHERE exam_id = :examId AND is_active = 1 ORDER BY display_order, name")
+    fun getSubjects(examId: String): Flow<List<SubjectEntity>>
+
+    @Query("SELECT * FROM topics WHERE subject_id = :subjectId AND is_active = 1 ORDER BY display_order, name")
+    fun getTopics(subjectId: String): Flow<List<TopicEntity>>
+
+    @Query("SELECT * FROM subtopics WHERE topic_id = :topicId AND is_active = 1 ORDER BY display_order, name")
+    fun getSubtopics(topicId: String): Flow<List<SubtopicEntity>>
+
+    @Query("SELECT * FROM subjects WHERE id = :id LIMIT 1")
+    suspend fun getSubjectDirect(id: String): SubjectEntity?
+
+    @Query("SELECT * FROM topics WHERE id = :id LIMIT 1")
+    suspend fun getTopicDirect(id: String): TopicEntity?
+
+    @Query("SELECT * FROM subtopics WHERE id = :id LIMIT 1")
+    suspend fun getSubtopicDirect(id: String): SubtopicEntity?
+}
+
 @Dao
 interface QuestionDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertQuestion(question: QuestionEntity): Long
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertQuestions(questions: List<QuestionEntity>): List<Long>
 
     @Update
     suspend fun updateQuestion(question: QuestionEntity)
 
-    @Query("SELECT * FROM questions ORDER BY id ASC")
+    @Query("SELECT * FROM questions WHERE is_active = 1 ORDER BY id")
     fun getAllQuestions(): Flow<List<QuestionEntity>>
 
     @Query("SELECT * FROM questions WHERE id = :id LIMIT 1")
@@ -39,46 +78,88 @@ interface QuestionDao {
     @Query("SELECT * FROM questions WHERE id = :id LIMIT 1")
     suspend fun getQuestionByIdDirect(id: Long): QuestionEntity?
 
-    @Query("SELECT * FROM questions WHERE subject = :subject ORDER BY id ASC")
-    fun getQuestionsBySubject(subject: String): Flow<List<QuestionEntity>>
+    @Query("""
+        SELECT q.* FROM questions q
+        INNER JOIN topics t ON t.id = q.topic_id
+        WHERE t.subject_id = :subjectId AND q.is_active = 1
+        ORDER BY t.display_order, q.id
+    """)
+    fun getQuestionsBySubject(subjectId: String): Flow<List<QuestionEntity>>
 
-    @Query("SELECT * FROM questions WHERE subject = :subject AND topic = :topic ORDER BY id ASC")
-    fun getQuestionsBySubjectAndTopic(subject: String, topic: String): Flow<List<QuestionEntity>>
+    @Query("SELECT * FROM questions WHERE topic_id = :topicId AND is_active = 1 ORDER BY id")
+    fun getQuestionsByTopic(topicId: String): Flow<List<QuestionEntity>>
 
-    @Query("SELECT * FROM questions WHERE subject = :subject AND topic = :topic ORDER BY id ASC")
-    suspend fun getQuestionsBySubjectAndTopicDirect(subject: String, topic: String): List<QuestionEntity>
+    @Query("""
+        SELECT q.* FROM questions q
+        INNER JOIN topics t ON t.id = q.topic_id
+        WHERE t.subject_id = :subjectId AND q.topic_id = :topicId AND q.is_active = 1
+        ORDER BY q.id
+    """)
+    fun getQuestionsBySubjectAndTopic(subjectId: String, topicId: String): Flow<List<QuestionEntity>>
 
-    @Query("SELECT COUNT(*) FROM questions WHERE subject = :subject AND topic = :topic")
-    suspend fun getQuestionsCountBySubjectAndTopic(subject: String, topic: String): Int
+    @Query("SELECT * FROM questions WHERE topic_id = :topicId AND is_active = 1 ORDER BY id")
+    suspend fun getQuestionsByTopicDirect(topicId: String): List<QuestionEntity>
 
-    @Query("SELECT * FROM questions WHERE year = :year ORDER BY id ASC")
+    @Query("""
+        SELECT q.* FROM questions q
+        INNER JOIN topics t ON t.id = q.topic_id
+        WHERE t.subject_id = :subjectId AND q.topic_id = :topicId AND q.is_active = 1
+        ORDER BY q.id
+    """)
+    suspend fun getQuestionsBySubjectAndTopicDirect(subjectId: String, topicId: String): List<QuestionEntity>
+
+    @Query("SELECT * FROM questions WHERE subtopic_id = :subtopicId AND is_active = 1 ORDER BY id")
+    fun getQuestionsBySubtopic(subtopicId: String): Flow<List<QuestionEntity>>
+
+    @Query("SELECT * FROM questions WHERE subtopic_id = :subtopicId AND is_active = 1 ORDER BY id")
+    suspend fun getQuestionsBySubtopicDirect(subtopicId: String): List<QuestionEntity>
+
+    @Query("SELECT COUNT(*) FROM questions WHERE topic_id = :topicId AND is_active = 1")
+    suspend fun getQuestionsCountByTopic(topicId: String): Int
+
+    @Query("SELECT * FROM questions WHERE year = :year AND is_active = 1 ORDER BY exam_date, shift, id")
     fun getQuestionsByYear(year: Int): Flow<List<QuestionEntity>>
 
-    @Query("SELECT * FROM questions WHERE year = :year AND shift = :shift ORDER BY id ASC")
+    @Query("SELECT * FROM questions WHERE year = :year AND shift = :shift AND is_active = 1 ORDER BY id")
     fun getQuestionsByYearAndShift(year: Int, shift: String): Flow<List<QuestionEntity>>
 
-    @Query("SELECT * FROM questions WHERE is_bookmarked = 1 ORDER BY id DESC")
+    @Query("""
+        SELECT q.* FROM questions q
+        INNER JOIN bookmarks b ON b.question_id = q.id
+        WHERE q.is_active = 1
+        ORDER BY b.created_at DESC
+    """)
     fun getBookmarkedQuestions(): Flow<List<QuestionEntity>>
 
-    @Query("UPDATE questions SET is_bookmarked = :isBookmarked WHERE id = :id")
-    suspend fun updateBookmarkStatus(id: Long, isBookmarked: Boolean)
+    @Query("""
+        SELECT q.* FROM questions q
+        INNER JOIN question_progress p ON p.question_id = q.id
+        WHERE p.attempt_count > 0 AND p.mastery_score < :masteryThreshold AND q.is_active = 1
+        ORDER BY p.mastery_score, p.last_attempted_at DESC
+    """)
+    fun getWeakAreaQuestions(masteryThreshold: Double = 60.0): Flow<List<QuestionEntity>>
 
-    @Query("DELETE FROM questions WHERE id = :id")
-    suspend fun deleteQuestionById(id: Long)
+    @Query("""
+        SELECT q.* FROM questions q
+        INNER JOIN question_progress p ON p.question_id = q.id
+        WHERE p.needs_revision = 1 AND q.is_active = 1
+        ORDER BY p.last_attempted_at ASC
+    """)
+    fun getRevisionQuestions(): Flow<List<QuestionEntity>>
+
+    @Query("UPDATE questions SET is_active = 0, updated_at = :updatedAt WHERE id = :id")
+    suspend fun archiveQuestion(id: Long, updatedAt: Long = System.currentTimeMillis())
 
     @Query("SELECT COUNT(*) FROM questions")
     fun getQuestionCount(): Flow<Int>
 }
 
-/**
- * Data Access Object for Tests table.
- */
 @Dao
 interface TestDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertTest(test: TestEntity): Long
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertTests(tests: List<TestEntity>): List<Long>
 
     @Query("SELECT * FROM tests ORDER BY created_at DESC")
@@ -87,7 +168,7 @@ interface TestDao {
     @Query("SELECT * FROM tests WHERE test_type = :testType ORDER BY created_at DESC")
     fun getTestsByType(testType: String): Flow<List<TestEntity>>
 
-    @Query("SELECT * FROM tests WHERE year = :year ORDER BY id ASC")
+    @Query("SELECT * FROM tests WHERE year = :year ORDER BY exam_date, shift, id")
     fun getTestsByYear(year: Int): Flow<List<TestEntity>>
 
     @Query("SELECT * FROM tests WHERE id = :id LIMIT 1")
@@ -100,25 +181,22 @@ interface TestDao {
     suspend fun deleteTestById(id: Long)
 }
 
-/**
- * Data Access Object for TestQuestions mapping table.
- */
 @Dao
 interface TestQuestionDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertTestQuestion(testQuestion: TestQuestionEntity): Long
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertTestQuestions(testQuestions: List<TestQuestionEntity>): List<Long>
 
-    @Query("SELECT * FROM test_questions WHERE test_id = :testId ORDER BY section_order ASC, question_order ASC")
+    @Query("SELECT * FROM test_questions WHERE test_id = :testId ORDER BY section_order, question_order")
     fun getTestQuestionsForTest(testId: Long): Flow<List<TestQuestionEntity>>
 
     @Query("""
         SELECT q.* FROM questions q
         INNER JOIN test_questions tq ON q.id = tq.question_id
         WHERE tq.test_id = :testId
-        ORDER BY tq.section_order ASC, tq.question_order ASC
+        ORDER BY tq.section_order, tq.question_order
     """)
     fun getQuestionsForTest(testId: Long): Flow<List<QuestionEntity>>
 
@@ -126,7 +204,7 @@ interface TestQuestionDao {
         SELECT q.* FROM questions q
         INNER JOIN test_questions tq ON q.id = tq.question_id
         WHERE tq.test_id = :testId
-        ORDER BY tq.section_order ASC, tq.question_order ASC
+        ORDER BY tq.section_order, tq.question_order
     """)
     suspend fun getQuestionsForTestDirect(testId: Long): List<QuestionEntity>
 
@@ -134,13 +212,13 @@ interface TestQuestionDao {
     suspend fun deleteTestQuestionsByTestId(testId: Long)
 }
 
-/**
- * Data Access Object for Attempts table.
- */
 @Dao
 interface AttemptDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertAttempt(attempt: AttemptEntity): Long
+
+    @Update
+    suspend fun updateAttempt(attempt: AttemptEntity)
 
     @Query("SELECT * FROM attempts ORDER BY start_time DESC")
     fun getAllAttempts(): Flow<List<AttemptEntity>>
@@ -161,9 +239,6 @@ interface AttemptDao {
     suspend fun deleteAttemptById(id: Long)
 }
 
-/**
- * Data Access Object for AttemptAnswers table.
- */
 @Dao
 interface AttemptAnswerDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -172,23 +247,45 @@ interface AttemptAnswerDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAttemptAnswers(answers: List<AttemptAnswerEntity>): List<Long>
 
-    @Query("SELECT * FROM attempt_answers WHERE attempt_id = :attemptId ORDER BY id ASC")
+    @Query("SELECT * FROM attempt_answers WHERE attempt_id = :attemptId ORDER BY answer_order")
     fun getAnswersForAttempt(attemptId: Long): Flow<List<AttemptAnswerEntity>>
 
-    @Query("SELECT * FROM attempt_answers WHERE attempt_id = :attemptId ORDER BY id ASC")
+    @Query("SELECT * FROM attempt_answers WHERE attempt_id = :attemptId ORDER BY answer_order")
     suspend fun getAnswersForAttemptDirect(attemptId: Long): List<AttemptAnswerEntity>
 
     @Query("DELETE FROM attempt_answers WHERE attempt_id = :attemptId")
     suspend fun deleteAnswersByAttemptId(attemptId: Long)
 }
 
-/**
- * Data Access Object for Daily Notes (Sets, Items, Progress).
- */
+@Dao
+interface BookmarkDao {
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun addBookmark(bookmark: BookmarkEntity): Long
+
+    @Query("DELETE FROM bookmarks WHERE question_id = :questionId")
+    suspend fun removeBookmark(questionId: Long)
+
+    @Query("SELECT EXISTS(SELECT 1 FROM bookmarks WHERE question_id = :questionId)")
+    fun isBookmarked(questionId: Long): Flow<Boolean>
+}
+
+@Dao
+interface QuestionProgressDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertProgress(progress: QuestionProgressEntity): Long
+
+    @Query("SELECT * FROM question_progress WHERE question_id = :questionId LIMIT 1")
+    fun getProgress(questionId: Long): Flow<QuestionProgressEntity?>
+
+    @Query("SELECT * FROM question_progress WHERE question_id = :questionId LIMIT 1")
+    suspend fun getProgressDirect(questionId: Long): QuestionProgressEntity?
+
+    @Query("SELECT * FROM question_progress WHERE needs_revision = 1 ORDER BY last_attempted_at")
+    fun getRevisionProgress(): Flow<List<QuestionProgressEntity>>
+}
+
 @Dao
 interface DailyNoteDao {
-
-    // --- Sets Operations ---
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSet(set: DailyNoteSetEntity): Long
 
@@ -204,10 +301,10 @@ interface DailyNoteDao {
     @Query("SELECT * FROM daily_note_sets WHERE type = :type AND is_active = 1 LIMIT 1")
     suspend fun getActiveSetByTypeDirect(type: String): DailyNoteSetEntity?
 
-    @Query("SELECT * FROM daily_note_sets WHERE type = :type ORDER BY set_number ASC")
+    @Query("SELECT * FROM daily_note_sets WHERE type = :type ORDER BY set_number")
     fun getAllSetsByType(type: String): Flow<List<DailyNoteSetEntity>>
 
-    @Query("SELECT * FROM daily_note_sets WHERE type = :type ORDER BY set_number ASC")
+    @Query("SELECT * FROM daily_note_sets WHERE type = :type ORDER BY set_number")
     suspend fun getAllSetsByTypeDirect(type: String): List<DailyNoteSetEntity>
 
     @Query("SELECT * FROM daily_note_sets WHERE type = :type AND set_number = :setNumber LIMIT 1")
@@ -225,23 +322,21 @@ interface DailyNoteDao {
     @Query("UPDATE daily_note_sets SET is_completed = 1, completed_at = :completedAt WHERE id = :setId")
     suspend fun markSetCompletedStatus(setId: Long, completedAt: Long = System.currentTimeMillis())
 
-    // --- Items Operations ---
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertItem(item: DailyNoteItemEntity): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertItems(items: List<DailyNoteItemEntity>): List<Long>
 
-    @Query("SELECT * FROM daily_note_items WHERE set_id = :setId ORDER BY item_order ASC")
+    @Query("SELECT * FROM daily_note_items WHERE set_id = :setId ORDER BY item_order")
     fun getItemsForSet(setId: Long): Flow<List<DailyNoteItemEntity>>
 
-    @Query("SELECT * FROM daily_note_items WHERE set_id = :setId ORDER BY item_order ASC")
+    @Query("SELECT * FROM daily_note_items WHERE set_id = :setId ORDER BY item_order")
     suspend fun getItemsForSetDirect(setId: Long): List<DailyNoteItemEntity>
 
     @Query("SELECT * FROM daily_note_items WHERE id = :itemId LIMIT 1")
     suspend fun getItemById(itemId: Long): DailyNoteItemEntity?
 
-    // --- Progress Operations ---
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrUpdateProgress(progress: DailyNoteProgressEntity): Long
 
@@ -275,29 +370,14 @@ interface DailyNoteDao {
     @Query("SELECT COUNT(*) FROM daily_note_sets WHERE type = :type AND is_completed = 0")
     suspend fun getUncompletedSetsCount(type: String): Int
 
-    /**
-     * Completes the current active set and unlocks/activates the next set.
-     * After all sets are done, returns null with no auto-restart.
-     */
     @Transaction
     suspend fun markSetCompletedAndUnlockNext(type: String, currentSetId: Long): DailyNoteSetEntity? {
-        val now = System.currentTimeMillis()
-        // 1. Mark current set as completed and inactive
-        markSetCompletedStatus(currentSetId, now)
+        markSetCompletedStatus(currentSetId)
         deactivateAllSetsForType(type)
-
-        // 2. Fetch all sets for this type
         val allSets = getAllSetsByTypeDirect(type)
-        if (allSets.isEmpty()) return null
-
-        val currentSet = allSets.find { it.id == currentSetId }
-        val currentSetNumber = currentSet?.setNumber ?: 1
-
-        // 3. Find next uncompleted set with setNumber > currentSetNumber, else any remaining uncompleted set
+        val currentSetNumber = allSets.find { it.id == currentSetId }?.setNumber ?: 1
         val nextSet = allSets.firstOrNull { it.setNumber > currentSetNumber && !it.isCompleted }
             ?: allSets.firstOrNull { !it.isCompleted }
-
-        // If an uncompleted set is found, activate it. If all are completed, return null without auto-restart.
         if (nextSet != null) {
             activateSetById(nextSet.id)
             return nextSet.copy(isActive = true)
@@ -305,4 +385,3 @@ interface DailyNoteDao {
         return null
     }
 }
-

@@ -932,7 +932,7 @@ fun NotesOverviewScreen(
                     title = "Current Affairs",
                     subtitle = "Categorized daily headlines & concise exam summaries",
                     icon = Icons.Default.Public,
-                    countLabel = if (caCompleted) "Completed" else "Set $caSetIdx of $caTotalSets • 10 Updates",
+                    countLabel = "16 Categories • January–September",
                     testTag = "daily_notes_card_current_affairs",
                     onClick = { onSelectCategory(DailyNoteCategory.CURRENT_AFFAIRS) }
                 )
@@ -1807,35 +1807,111 @@ fun IdiomsDetailScreen(
     }
 }
 
+private val currentAffairsCategories = listOf(
+    "Sports",
+    "Obituaries",
+    "Awards & Honours",
+    "National Appointment",
+    "International Appointment",
+    "National News",
+    "International News",
+    "State News",
+    "Index & Ranking",
+    "Events and Summit",
+    "Important Books",
+    "Military Exercises",
+    "Important Days & Themes",
+    "Science & Technology",
+    "Important Schemes",
+    "Miscellaneous"
+)
+
+private val currentAffairsMonths = listOf(
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September"
+)
+
+private data class CurrentAffairsPlaceholder(
+    val id: String,
+    val headline: String,
+    val summary: String,
+    val date: String
+)
+
+private fun currentAffairsPlaceholders(
+    category: String,
+    month: String
+): List<CurrentAffairsPlaceholder> {
+    val headlinePatterns = listOf(
+        "$category development highlighted in $month",
+        "Key $category update for SSC CGL revision",
+        "$month briefing: important $category milestone",
+        "Exam focus: notable $category announcement",
+        "$category monthly recap and quick facts",
+        "One-liner revision: $category in $month",
+        "$month current affairs digest: $category"
+    )
+    val summaryPatterns = listOf(
+        "This is placeholder content for testing the category and month filtering flow. Replace it with a verified current-affairs summary before release.",
+        "A concise SSC CGL-style explanation will appear here, covering the key person, place, organisation, date, and exam-relevant fact.",
+        "This sample entry confirms that the selected category and month are being applied correctly while the real offline dataset is prepared.",
+        "Use this area for a short factual summary followed by the most likely one-line exam takeaway and any essential related detail.",
+        "Placeholder revision note: the production record should be sourced, dated, reviewed, and stored locally for fully offline access."
+    )
+    val seed = (category + month).hashCode().toLong() and 0x7FFFFFFFL
+
+    return List(5) { index ->
+        val headlineIndex = ((seed + index * 3L) % headlinePatterns.size).toInt()
+        val summaryIndex = ((seed + index * 2L) % summaryPatterns.size).toInt()
+        val day = 1 + ((seed + index * 5L) % 28).toInt()
+        CurrentAffairsPlaceholder(
+            id = "${category.lowercase().replace(" ", "_")}_${month.lowercase()}_$index",
+            headline = headlinePatterns[headlineIndex],
+            summary = summaryPatterns[summaryIndex],
+            date = "$month $day"
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CurrentAffairsDetailScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
-    val roomRepo = remember { DailyNotesRoomRepository.getInstance(context) }
-    val coroutineScope = rememberCoroutineScope()
-
-    var activeSetWithItems by remember { mutableStateOf<DailyNoteSetWithItems?>(null) }
-    var totalSets by remember { mutableStateOf(5) }
-    var isCategoryDone by remember { mutableStateOf(false) }
-    var showCompletedFeedback by remember { mutableStateOf(false) }
-    var isMarkingCompleted by remember { mutableStateOf(false) }
+    var selectedCurrentAffairsCategory by rememberSaveable { mutableStateOf<String?>(null) }
+    var selectedCurrentAffairsMonth by rememberSaveable { mutableStateOf<String?>(null) }
     val scrollState = rememberScrollState()
 
-    LaunchedEffect(Unit) {
-        val total = roomRepo.getTotalSetsCount(DailyNotesRoomRepository.TYPE_CURRENT_AFFAIRS)
-        if (total > 0) totalSets = total
-        val active = roomRepo.getActiveSetWithItems(DailyNotesRoomRepository.TYPE_CURRENT_AFFAIRS)
-        activeSetWithItems = active
-        isCategoryDone = (active == null)
+    LaunchedEffect(selectedCurrentAffairsCategory, selectedCurrentAffairsMonth) {
+        scrollState.scrollTo(0)
     }
 
-    val currentSet = activeSetWithItems?.set
-    val items = activeSetWithItems?.items ?: emptyList()
-    val currentSetNumber = currentSet?.setNumber ?: totalSets
-    val itemsCount = if (items.isNotEmpty()) items.size else 10
+    val navigateBack: () -> Unit = {
+        when {
+            selectedCurrentAffairsMonth != null -> selectedCurrentAffairsMonth = null
+            selectedCurrentAffairsCategory != null -> selectedCurrentAffairsCategory = null
+            else -> onBack()
+        }
+    }
+
+    BackHandler(
+        enabled = selectedCurrentAffairsCategory != null || selectedCurrentAffairsMonth != null,
+        onBack = navigateBack
+    )
+
+    val subtitle = when {
+        selectedCurrentAffairsCategory == null -> "Step 1 of 2 • Select category"
+        selectedCurrentAffairsMonth == null -> "Step 2 of 2 • Select month"
+        else -> "$selectedCurrentAffairsCategory • $selectedCurrentAffairsMonth"
+    }
 
     Scaffold(
         modifier = modifier
@@ -1851,18 +1927,18 @@ fun CurrentAffairsDetailScreen(
                             color = TextDarkHeading
                         )
                         Text(
-                            text = if (isCategoryDone) "All 50 updates completed" else "Set $currentSetNumber of $totalSets • $itemsCount Updates",
+                            text = subtitle,
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Medium
                             ),
-                            color = if (isCategoryDone) CorrectGreen else PrimaryBlue
+                            color = PrimaryBlue
                         )
                     }
                 },
                 navigationIcon = {
                     IconButton(
-                        onClick = onBack,
+                        onClick = navigateBack,
                         modifier = Modifier.testTag("btn_back_current_affairs")
                     ) {
                         Icon(
@@ -1872,9 +1948,7 @@ fun CurrentAffairsDetailScreen(
                         )
                     }
                 },
-                actions = {
-                    OfflineBadge()
-                },
+                actions = { OfflineBadge() },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = LightBackground,
                     titleContentColor = TextDarkHeading
@@ -1895,159 +1969,152 @@ fun CurrentAffairsDetailScreen(
                     .fillMaxWidth()
                     .verticalScroll(scrollState)
                     .padding(horizontal = 20.dp, vertical = 14.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                if (showCompletedFeedback && !isCategoryDone) {
-                    Surface(
-                        shape = RoundedCornerShape(10.dp),
-                        color = CorrectGreen.copy(alpha = 0.1f),
-                        border = BorderStroke(1.dp, CorrectGreen.copy(alpha = 0.3f)),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = null,
-                                tint = CorrectGreen,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Set completed! Loaded Set $currentSetNumber for study.",
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 12.sp,
-                                    color = CorrectGreen
-                                )
-                            )
-                        }
-                    }
-                }
-
-                if (isCategoryDone || items.isEmpty()) {
-                    // All available sets completed state
-                    Surface(
-                        shape = RoundedCornerShape(16.dp),
-                        color = LightSurface,
-                        border = BorderStroke(1.dp, BorderLight),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("all_sets_completed_current_affairs")
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(28.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Surface(
-                                modifier = Modifier.size(60.dp),
-                                shape = CircleShape,
-                                color = CorrectGreen.copy(alpha = 0.12f),
-                                border = BorderStroke(1.dp, CorrectGreen.copy(alpha = 0.3f))
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = null,
-                                        tint = CorrectGreen,
-                                        modifier = Modifier.size(32.dp)
-                                    )
+                when {
+                    selectedCurrentAffairsCategory == null -> {
+                        CurrentAffairsSectionHeading(
+                            title = "Select Category",
+                            subtitle = "Choose one topic to view its month-wise updates."
+                        )
+                        currentAffairsCategories.forEachIndexed { index, category ->
+                            CurrentAffairsSelectorCard(
+                                title = category,
+                                supportingText = "Category ${index + 1} of ${currentAffairsCategories.size}",
+                                leadingText = (index + 1).toString().padStart(2, '0'),
+                                testTag = "current_affairs_category_${category.toTestTag()}",
+                                onClick = {
+                                    selectedCurrentAffairsCategory = category
+                                    selectedCurrentAffairsMonth = null
                                 }
-                            }
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = "All available sets completed",
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp
-                                ),
-                                color = TextDarkHeading,
-                                textAlign = TextAlign.Center
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                text = "You have completed all 50 current affairs updates in the database.",
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    fontSize = 13.sp,
-                                    lineHeight = 18.sp
-                                ),
-                                color = TextMediumGray,
-                                textAlign = TextAlign.Center
                             )
                         }
                     }
-                } else {
-                    items.forEachIndexed { index, item ->
-                        Card(
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = LightSurface),
+
+                    selectedCurrentAffairsMonth == null -> {
+                        CurrentAffairsSectionHeading(
+                            title = "Select Month",
+                            subtitle = "Showing available months for $selectedCurrentAffairsCategory."
+                        )
+                        currentAffairsMonths.forEachIndexed { index, month ->
+                            CurrentAffairsSelectorCard(
+                                title = month,
+                                supportingText = "$selectedCurrentAffairsCategory • 5 sample updates",
+                                leadingText = (index + 1).toString().padStart(2, '0'),
+                                testTag = "current_affairs_month_${month.lowercase()}",
+                                onClick = { selectedCurrentAffairsMonth = month }
+                            )
+                        }
+                    }
+
+                    else -> {
+                        val category = selectedCurrentAffairsCategory.orEmpty()
+                        val month = selectedCurrentAffairsMonth.orEmpty()
+                        val placeholderItems = remember(category, month) {
+                            currentAffairsPlaceholders(category, month)
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(14.dp),
+                            color = LightCardBackgroundVariant,
                             border = BorderStroke(1.dp, BorderLight),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .testTag("current_affair_card_${item.id}")
+                                .testTag("current_affairs_active_filters")
                         ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(18.dp)
-                            ) {
-                                // Category Badge + Date
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Surface(
-                                        shape = RoundedCornerShape(6.dp),
-                                        color = PrimaryBlue.copy(alpha = 0.08f),
-                                        border = BorderStroke(0.5.dp, PrimaryBlue.copy(alpha = 0.2f))
-                                    ) {
-                                        Text(
-                                            text = item.category.ifEmpty { "General" },
-                                            style = MaterialTheme.typography.labelSmall.copy(
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 11.sp,
-                                                color = PrimaryBlue
-                                            ),
-                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                                        )
-                                    }
-
-                                    Text(
-                                        text = item.factDate.ifEmpty { "Daily Edition" },
-                                        style = MaterialTheme.typography.labelSmall.copy(
-                                            fontWeight = FontWeight.Medium,
-                                            fontSize = 11.sp,
-                                            color = TextMediumGray
-                                        )
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.height(10.dp))
-
-                                // Headline
+                            Column(modifier = Modifier.padding(14.dp)) {
                                 Text(
-                                    text = "${index + 1}. ${item.wordOrTitle}",
-                                    style = MaterialTheme.typography.titleMedium.copy(
+                                    text = category,
+                                    style = MaterialTheme.typography.titleSmall.copy(
                                         fontWeight = FontWeight.Bold,
-                                        fontSize = 15.sp,
-                                        lineHeight = 21.sp
+                                        fontSize = 15.sp
                                     ),
                                     color = TextDarkHeading
                                 )
-
+                                Spacer(modifier = Modifier.height(3.dp))
+                                Text(
+                                    text = "$month • ${placeholderItems.size} placeholder updates",
+                                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                                    color = TextMediumGray
+                                )
                                 Spacer(modifier = Modifier.height(10.dp))
+                                OutlinedButton(
+                                    onClick = {
+                                        selectedCurrentAffairsCategory = null
+                                        selectedCurrentAffairsMonth = null
+                                    },
+                                    shape = RoundedCornerShape(10.dp),
+                                    border = BorderStroke(1.dp, PrimaryBlue.copy(alpha = 0.35f)),
+                                    modifier = Modifier.testTag("btn_change_current_affairs_filters")
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Tune,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(7.dp))
+                                    Text(text = "Change selection", fontWeight = FontWeight.SemiBold)
+                                }
+                            }
+                        }
 
-                                // Description / Explanation
-                                val displayText = item.explanation.ifEmpty { item.example.ifEmpty { item.meaning } }
-                                if (displayText.isNotEmpty()) {
+                        placeholderItems.forEachIndexed { index, item ->
+                            Card(
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = LightSurface),
+                                border = BorderStroke(1.dp, BorderLight),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag("current_affair_card_${item.id}")
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(18.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Surface(
+                                            shape = RoundedCornerShape(6.dp),
+                                            color = PrimaryBlue.copy(alpha = 0.08f),
+                                            border = BorderStroke(0.5.dp, PrimaryBlue.copy(alpha = 0.2f))
+                                        ) {
+                                            Text(
+                                                text = category,
+                                                style = MaterialTheme.typography.labelSmall.copy(
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 11.sp,
+                                                    color = PrimaryBlue
+                                                ),
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                            )
+                                        }
+                                        Text(
+                                            text = item.date,
+                                            style = MaterialTheme.typography.labelSmall.copy(
+                                                fontWeight = FontWeight.Medium,
+                                                fontSize = 11.sp
+                                            ),
+                                            color = TextMediumGray
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(10.dp))
                                     Text(
-                                        text = displayText,
+                                        text = "${index + 1}. ${item.headline}",
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 15.sp,
+                                            lineHeight = 21.sp
+                                        ),
+                                        color = TextDarkHeading
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = item.summary,
                                         style = MaterialTheme.typography.bodySmall.copy(
                                             fontSize = 13.sp,
                                             lineHeight = 19.sp
@@ -2057,54 +2124,23 @@ fun CurrentAffairsDetailScreen(
                                 }
                             }
                         }
-                    }
 
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    // Bottom "Mark as completed" Button
-                    Button(
-                        onClick = {
-                            if (currentSet != null && !isMarkingCompleted) {
-                                isMarkingCompleted = true
-                                coroutineScope.launch {
-                                    val nextSetWithItems = roomRepo.markSetCompletedWithItems(
-                                        DailyNotesRoomRepository.TYPE_CURRENT_AFFAIRS,
-                                        currentSet.id
-                                    )
-                                    activeSetWithItems = nextSetWithItems
-                                    isCategoryDone = (nextSetWithItems == null)
-                                    showCompletedFeedback = true
-                                    isMarkingCompleted = false
-                                    scrollState.animateScrollTo(0)
-                                }
-                            }
-                        },
-                        enabled = !isMarkingCompleted,
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp)
-                            .testTag("btn_complete_current_affairs")
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = PrimaryBlue.copy(alpha = 0.06f),
+                            border = BorderStroke(1.dp, PrimaryBlue.copy(alpha = 0.18f)),
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Mark as completed",
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 15.sp,
-                                    color = Color.White
-                                )
+                                text = "Preview data only • Real verified current affairs will replace these entries later.",
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 12.sp,
+                                    lineHeight = 17.sp
+                                ),
+                                color = PrimaryBlue,
+                                modifier = Modifier.padding(14.dp),
+                                textAlign = TextAlign.Center
                             )
                         }
                     }
@@ -2115,6 +2151,104 @@ fun CurrentAffairsDetailScreen(
         }
     }
 }
+
+@Composable
+private fun CurrentAffairsSectionHeading(
+    title: String,
+    subtitle: String
+) {
+    Column(modifier = Modifier.padding(bottom = 4.dp)) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp
+            ),
+            color = TextDarkHeading
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = subtitle,
+            style = MaterialTheme.typography.bodySmall.copy(
+                fontSize = 13.sp,
+                lineHeight = 18.sp
+            ),
+            color = TextMediumGray
+        )
+    }
+}
+
+@Composable
+private fun CurrentAffairsSelectorCard(
+    title: String,
+    supportingText: String,
+    leadingText: String,
+    testTag: String,
+    onClick: () -> Unit
+) {
+    Card(
+        onClick = onClick,
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = LightSurface),
+        border = BorderStroke(1.dp, BorderLight),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(testTag)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                modifier = Modifier.size(40.dp),
+                shape = RoundedCornerShape(10.dp),
+                color = PrimaryBlue.copy(alpha = 0.09f),
+                border = BorderStroke(1.dp, PrimaryBlue.copy(alpha = 0.18f))
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = leadingText,
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        ),
+                        color = PrimaryBlue
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    ),
+                    color = TextDarkHeading
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = supportingText,
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+                    color = TextMediumGray
+                )
+            }
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = null,
+                tint = PrimaryBlue.copy(alpha = 0.65f),
+                modifier = Modifier.size(18.dp)
+            )
+        }
+    }
+}
+
+private fun String.toTestTag(): String = lowercase()
+    .replace("&", "and")
+    .replace(" ", "_")
 
 @Composable
 fun OfflineBadge(
