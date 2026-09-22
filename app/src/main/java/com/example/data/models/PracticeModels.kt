@@ -15,7 +15,6 @@ enum class PaletteState(val label: String) {
 
 data class PracticeQuestion(
     val id: Int,
-    val roomQuestionId: Long? = null,
     val questionNumber: Int,
     val questionText: String,
     val options: List<String>,
@@ -26,7 +25,8 @@ data class PracticeQuestion(
     val topicTitle: String,
     val subtopicTitle: String,
     val subtopicId: String,
-    val shortcutMethod: String? = null
+    val shortcutMethod: String? = null,
+    val roomQuestionId: Long? = null
 )
 
 data class UserQuestionState(
