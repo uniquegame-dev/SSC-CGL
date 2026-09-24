@@ -77,9 +77,9 @@ fun GreetingScreen(
     onSubjectClick: (Subject) -> Unit,
     modifier: Modifier = Modifier,
     userName: String = "",
-    onBack: () -> Unit = {}
+    onBack: () -> Unit = {},
+    subjects: List<Subject> = SscDataRepository.subjects
 ) {
-    val subjects = SscDataRepository.subjects
     val scrollState = rememberScrollState()
 
     Scaffold(
@@ -125,38 +125,22 @@ fun GreetingScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    // Row 1: Reasoning & Maths
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        SubjectCard(
-                            subject = subjects[0],
-                            onClick = { onSubjectClick(subjects[0]) },
-                            modifier = Modifier.weight(1f)
-                        )
-                        SubjectCard(
-                            subject = subjects[1],
-                            onClick = { onSubjectClick(subjects[1]) },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-
-                    // Row 2: English & GK/GA
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        SubjectCard(
-                            subject = subjects[2],
-                            onClick = { onSubjectClick(subjects[2]) },
-                            modifier = Modifier.weight(1f)
-                        )
-                        SubjectCard(
-                            subject = subjects[3],
-                            onClick = { onSubjectClick(subjects[3]) },
-                            modifier = Modifier.weight(1f)
-                        )
+                    subjects.chunked(2).forEach { rowSubjects ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            rowSubjects.forEach { subject ->
+                                SubjectCard(
+                                    subject = subject,
+                                    onClick = { onSubjectClick(subject) },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                            if (rowSubjects.size == 1) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
                     }
                 }
 

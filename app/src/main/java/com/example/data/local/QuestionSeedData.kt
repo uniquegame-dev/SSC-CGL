@@ -122,4 +122,9 @@ object QuestionSeedData {
         sourceType = "PRACTICE",
         sourceName = "Bundled seed"
     )
+
+    val allQuestions: List<QuestionEntity> by lazy {
+        (reasoningAnalogyQuestions + LegacyQuestionBankSeedData.questions)
+            .distinctBy { it.questionText.trim().lowercase() }
+    }
 }

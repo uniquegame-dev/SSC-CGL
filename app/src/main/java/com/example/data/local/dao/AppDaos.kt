@@ -108,6 +108,15 @@ interface QuestionDao {
     """)
     suspend fun getQuestionsBySubjectAndTopicDirect(subjectId: String, topicId: String): List<QuestionEntity>
 
+    @Query("""
+        SELECT q.* FROM questions q
+        INNER JOIN topics t ON t.id = q.topic_id
+        WHERE t.subject_id = :subjectId AND q.is_active = 1
+        ORDER BY RANDOM()
+        LIMIT :limit
+    """)
+    suspend fun getRandomQuestionsBySubject(subjectId: String, limit: Int): List<QuestionEntity>
+
     @Query("SELECT * FROM questions WHERE subtopic_id = :subtopicId AND is_active = 1 ORDER BY id")
     fun getQuestionsBySubtopic(subtopicId: String): Flow<List<QuestionEntity>>
 
@@ -149,6 +158,18 @@ interface QuestionDao {
 
     @Query("UPDATE questions SET is_active = 0, updated_at = :updatedAt WHERE id = :id")
     suspend fun archiveQuestion(id: Long, updatedAt: Long = System.currentTimeMillis())
+
+    @Query("""
+        UPDATE questions
+        SET topic_id = :topicId, subtopic_id = :subtopicId, updated_at = :updatedAt
+        WHERE content_key = :contentKey
+    """)
+    suspend fun updateQuestionClassification(
+        contentKey: String,
+        topicId: String,
+        subtopicId: String?,
+        updatedAt: Long = System.currentTimeMillis()
+    )
 
     @Query("SELECT COUNT(*) FROM questions")
     fun getQuestionCount(): Flow<Int>

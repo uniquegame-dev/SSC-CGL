@@ -105,6 +105,14 @@ object AppDatabaseMigrations {
             ('english_general', 'english', 'General English', 'Migrated uncategorized English questions', 999, 1),
             ('gk_ga_general', 'gk_ga', 'General Knowledge', 'Migrated uncategorized GK and GA questions', 999, 1)
         """.trimIndent())
+
+        db.execSQL("""
+            INSERT OR IGNORE INTO subtopics(id, topic_id, name, description, display_order, is_active) VALUES
+            ('sub_sem_ana', 'analogies', 'Semantic Analogy', 'Word and concept relationship pairings', 1, 1),
+            ('sub_sym_ana', 'analogies', 'Symbolic / Number Analogy', 'Numerical relations, squares, and cubes', 2, 1),
+            ('sub_fig_ana', 'analogies', 'Figural Analogy', 'Pattern transformation and rotation rules', 3, 1),
+            ('sub_odd_one', 'analogies', 'Odd One Out / Classification', 'Identifying non-matching elements in sets', 4, 1)
+        """.trimIndent())
     }
 
     private fun createQuestionBankTables(db: SupportSQLiteDatabase) {
@@ -272,7 +280,25 @@ object AppDatabaseMigrations {
                 explanation, difficulty, source_type, source_name, year,
                 exam_date, shift, language, is_active, created_at, updated_at
             )
-            SELECT id, 'legacy-' || id, $topicIdSql, NULL, question_text,
+            SELECT id,
+                   CASE question_text
+                       WHEN 'House : Rent :: Capital : ?' THEN 'seed_reasoning_analogy_001'
+                       WHEN 'NUMBER : UNBMRE :: GHOST : ?' THEN 'seed_reasoning_analogy_002'
+                       WHEN '18 : 30 :: 36 : ?' THEN 'seed_reasoning_analogy_003'
+                       WHEN 'Find the set most like (4,10,15).' THEN 'seed_reasoning_analogy_004'
+                       WHEN 'set most like (6,36,63).' THEN 'seed_reasoning_analogy_005'
+                       ELSE 'legacy-' || id
+                   END,
+                   $topicIdSql,
+                   CASE question_text
+                       WHEN 'House : Rent :: Capital : ?' THEN 'sub_sem_ana'
+                       WHEN 'NUMBER : UNBMRE :: GHOST : ?' THEN 'sub_sem_ana'
+                       WHEN '18 : 30 :: 36 : ?' THEN 'sub_sym_ana'
+                       WHEN 'Find the set most like (4,10,15).' THEN 'sub_sym_ana'
+                       WHEN 'set most like (6,36,63).' THEN 'sub_sym_ana'
+                       ELSE NULL
+                   END,
+                   question_text,
                    option_a, option_b, option_c, option_d, correct_option,
                    explanation, upper(difficulty),
                    CASE WHEN year IS NULL THEN 'PRACTICE' ELSE 'PYQ' END,

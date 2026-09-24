@@ -72,6 +72,20 @@ class SscLocalRepository(private val database: AppDatabase) {
     suspend fun getQuestionsBySubtopicDirect(subtopicId: String): List<QuestionEntity> =
         questionDao.getQuestionsBySubtopicDirect(subtopicId)
 
+    suspend fun getQuestionsByTopicDirect(topicId: String): List<QuestionEntity> =
+        questionDao.getQuestionsByTopicDirect(topicId)
+
+    suspend fun getRandomQuestionsForSubject(subjectId: String, limit: Int): List<QuestionEntity> =
+        questionDao.getRandomQuestionsBySubject(subjectId, limit)
+
+    suspend fun getRandomQuestionsForSubjects(
+        subjectIds: List<String>,
+        perSubject: Int
+    ): List<QuestionEntity> = subjectIds
+        .distinct()
+        .flatMap { getRandomQuestionsForSubject(it, perSubject) }
+        .distinctBy(QuestionEntity::id)
+
     fun getQuestionsBySubjectAndTopic(
         subjectId: String,
         topicId: String
@@ -226,7 +240,14 @@ class SscLocalRepository(private val database: AppDatabase) {
         hierarchyDao.insertSubjects(QuestionSeedData.subjects)
         hierarchyDao.insertTopics(QuestionSeedData.topics)
         hierarchyDao.insertSubtopics(SubjectCatalogSeedData.subtopics)
-        questionDao.insertQuestions(QuestionSeedData.reasoningAnalogyQuestions)
+        questionDao.insertQuestions(QuestionSeedData.allQuestions)
+        QuestionSeedData.allQuestions.forEach { question ->
+            questionDao.updateQuestionClassification(
+                contentKey = question.contentKey,
+                topicId = question.topicId,
+                subtopicId = question.subtopicId
+            )
+        }
     }
 
     suspend fun seedInitialQuestionsIfEmpty() = seedFoundationIfNeeded()

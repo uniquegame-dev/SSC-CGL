@@ -81,7 +81,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.data.PracticeQuestionRepository
 import com.example.data.models.CustomTestResult
 import com.example.data.models.Difficulty
 import com.example.data.models.PaletteState
@@ -113,15 +112,11 @@ fun CustomTestScreen(
     testTitle: String = "Custom Test",
     selectedSubjectIds: List<String>,
     isTimed: Boolean,
+    questions: List<PracticeQuestion>,
     onTestFinished: (CustomTestResult) -> Unit,
     onExit: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // 1. Load questions (25 per subject)
-    val questions = remember(selectedSubjectIds) {
-        PracticeQuestionRepository.getQuestionsForCustomTest(selectedSubjectIds)
-    }
-
     if (questions.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text("No questions available for selected subjects.")
@@ -140,7 +135,7 @@ fun CustomTestScreen(
     var isTimerRunning by remember { mutableStateOf(true) }
 
     // User answers state
-    val userAnswers = remember {
+    val userAnswers = remember(questions) {
         mutableStateMapOf<Int, UserQuestionState>().apply {
             questions.forEachIndexed { idx, q ->
                 put(q.id, UserQuestionState(questionId = q.id, isVisited = idx == 0))
@@ -243,7 +238,8 @@ fun CustomTestScreen(
                 correctOptionIndex = q.correctOptionIndex,
                 isCorrect = isCorrect,
                 isAttempted = isAttempted,
-                timeSpentSeconds = timeSpent
+                timeSpentSeconds = timeSpent,
+                isMarkedForReview = state?.isMarkedForReview == true
             )
         }
 

@@ -13,6 +13,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,6 +30,7 @@ import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Quiz
 import androidx.compose.material.icons.outlined.StickyNote2
 import androidx.compose.material3.Icon
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -43,16 +45,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.data.PracticeQuestionRepository
 import com.example.data.models.CustomTestResult
 import com.example.data.models.PracticeSessionResult
-import com.example.data.models.SscDataRepository
+import com.example.data.models.Subtopic
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ui.screens.CustomTestResultScreen
 import com.example.ui.screens.CustomTestScreen
 import com.example.ui.screens.CustomTestSetupScreen
@@ -64,7 +68,6 @@ import com.example.ui.screens.PracticeQuestionScreen
 import com.example.ui.screens.PyqYearDetailScreen
 import com.example.ui.screens.PyqYearsScreen
 import com.example.ui.screens.ResultAnalysisScreen
-import com.example.ui.screens.SubtopicsScreen
 import com.example.ui.screens.TestTabScreen
 import com.example.ui.screens.TopicsScreen
 import com.example.ui.screens.WelcomeScreen
@@ -76,6 +79,8 @@ import com.example.ui.theme.MyApplicationTheme
 import com.example.ui.theme.PrimaryBlue
 import com.example.ui.theme.TextDarkHeading
 import com.example.ui.theme.TextMediumGray
+import com.example.ui.viewmodels.SubjectPracticeViewModel
+import com.example.ui.viewmodels.TestSessionViewModel
 
 enum class BottomNavTab(
   val label: String,
@@ -93,7 +98,6 @@ enum class AppScreen {
   WELCOME,
   MAIN_TABS,
   TOPICS,
-  SUBTOPICS,
   PRACTICE,
   RESULT,
   MOCK_TEST_OVERVIEW,
@@ -118,12 +122,15 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun SscCglPracticeApp(modifier: Modifier = Modifier) {
+  val subjectPracticeViewModel: SubjectPracticeViewModel = viewModel()
+  val subjectPracticeState by subjectPracticeViewModel.uiState.collectAsStateWithLifecycle()
+  val testSessionViewModel: TestSessionViewModel = viewModel()
+  val testSessionState by testSessionViewModel.uiState.collectAsStateWithLifecycle()
   var currentScreen by rememberSaveable { mutableStateOf(AppScreen.WELCOME) }
   var currentTab by rememberSaveable { mutableStateOf(BottomNavTab.HOME) }
   var userName by rememberSaveable { mutableStateOf("") }
   var selectedSubjectId by rememberSaveable { mutableStateOf<String?>(null) }
   var selectedTopicId by rememberSaveable { mutableStateOf<String?>(null) }
-  var selectedSubtopicId by rememberSaveable { mutableStateOf<String?>(null) }
   var practiceResult by remember { mutableStateOf<PracticeSessionResult?>(null) }
 
   // Custom Test & Mock Test state
@@ -134,13 +141,8 @@ fun SscCglPracticeApp(modifier: Modifier = Modifier) {
   var activeTestTitle by rememberSaveable { mutableStateOf("Custom Test") }
   var activeTestSourceScreen by rememberSaveable { mutableStateOf(AppScreen.CUSTOM_TEST_SETUP) }
 
-  val currentSubject = selectedSubjectId?.let { SscDataRepository.getSubjectById(it) }
-  val currentTopic = if (selectedSubjectId != null && selectedTopicId != null) {
-    SscDataRepository.getTopicById(selectedSubjectId!!, selectedTopicId!!)
-  } else null
-  val currentSubtopic = if (currentTopic != null && selectedSubtopicId != null) {
-    currentTopic.subtopics.find { it.id == selectedSubtopicId }
-  } else null
+  val currentSubject = subjectPracticeState.selectedSubject
+  val currentTopic = subjectPracticeState.selectedTopic
 
   // System back button handling for hierarchical navigation
   BackHandler(enabled = currentScreen != AppScreen.WELCOME) {
@@ -174,23 +176,18 @@ fun SscCglPracticeApp(modifier: Modifier = Modifier) {
       AppScreen.RESULT -> {
         currentScreen = AppScreen.TOPICS
         selectedTopicId = null
-        selectedSubtopicId = null
+        subjectPracticeViewModel.clearTopicSelection()
       }
       AppScreen.PRACTICE -> {
         currentScreen = AppScreen.TOPICS
         selectedTopicId = null
-        selectedSubtopicId = null
-      }
-      AppScreen.SUBTOPICS -> {
-        currentScreen = AppScreen.TOPICS
-        selectedTopicId = null
-        selectedSubtopicId = null
       }
       AppScreen.TOPICS -> {
         currentScreen = AppScreen.MAIN_TABS
         currentTab = BottomNavTab.SUBJECTS
         selectedSubjectId = null
         selectedTopicId = null
+        subjectPracticeViewModel.clearSubjectSelection()
       }
       AppScreen.MAIN_TABS -> {
         if (currentTab != BottomNavTab.HOME) {
@@ -270,8 +267,10 @@ fun SscCglPracticeApp(modifier: Modifier = Modifier) {
                 BottomNavTab.SUBJECTS -> {
                   GreetingScreen(
                     userName = userName,
+                    subjects = subjectPracticeState.subjects,
                     onSubjectClick = { subject ->
                       selectedSubjectId = subject.id
+                      subjectPracticeViewModel.selectSubject(subject)
                       currentScreen = AppScreen.TOPICS
                     },
                     onBack = {
@@ -305,12 +304,14 @@ fun SscCglPracticeApp(modifier: Modifier = Modifier) {
               subject = currentSubject,
               onTopicClick = { topic ->
                 selectedTopicId = topic.id
+                subjectPracticeViewModel.selectTopicForPractice(topic)
                 currentScreen = AppScreen.PRACTICE
               },
               onBack = {
                 currentScreen = AppScreen.MAIN_TABS
                 currentTab = BottomNavTab.SUBJECTS
                 selectedSubjectId = null
+                subjectPracticeViewModel.clearSubjectSelection()
               }
             )
           } else {
@@ -318,61 +319,45 @@ fun SscCglPracticeApp(modifier: Modifier = Modifier) {
             currentTab = BottomNavTab.SUBJECTS
           }
         }
-        AppScreen.SUBTOPICS -> {
-          if (currentSubject != null && currentTopic != null) {
-            SubtopicsScreen(
-              subject = currentSubject,
-              topic = currentTopic,
-              onSubtopicClick = { subtopic ->
-                selectedSubtopicId = subtopic.id
-                currentScreen = AppScreen.PRACTICE
-              },
-              onBack = {
-                currentScreen = AppScreen.TOPICS
-                selectedTopicId = null
-                selectedSubtopicId = null
-              }
-            )
-          } else if (currentSubject != null) {
-            TopicsScreen(
-              subject = currentSubject,
-              onTopicClick = { topic ->
-                selectedTopicId = topic.id
-                currentScreen = AppScreen.PRACTICE
-              },
-              onBack = {
-                currentScreen = AppScreen.MAIN_TABS
-                currentTab = BottomNavTab.SUBJECTS
-                selectedSubjectId = null
-              }
-            )
-          }
-        }
         AppScreen.PRACTICE -> {
           if (currentSubject != null && currentTopic != null) {
-            val questions = remember(currentTopic.id) {
-              PracticeQuestionRepository.getQuestionsForTopic(
-                subjectId = currentSubject.id,
-                subjectTitle = currentSubject.title,
-                topicId = currentTopic.id,
-                topicTitle = currentTopic.title
-              )
-            }
+            val questions = subjectPracticeState.questions
+            val practiceScope = Subtopic(currentTopic.id, currentTopic.title, currentTopic.description)
+            if (subjectPracticeState.isLoadingQuestions) {
+              Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = PrimaryBlue)
+              }
+            } else if (questions.isEmpty()) {
+              Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                  Text(
+                    text = "No questions available for this subtopic yet.",
+                    color = TextMediumGray
+                  )
+                }
+              }
+            } else {
             PracticeQuestionScreen(
               subject = currentSubject,
               topic = currentTopic,
-              subtopic = currentSubtopic,
+              subtopic = practiceScope,
               questions = questions,
               onFinishPractice = { result ->
-                practiceResult = result
-                currentScreen = AppScreen.RESULT
+                subjectPracticeViewModel.recordPracticeResult(result) { savedResult ->
+                  practiceResult = savedResult
+                  currentScreen = AppScreen.RESULT
+                }
+              },
+              onBackToSubtopics = {
+                currentScreen = AppScreen.TOPICS
+                selectedTopicId = null
               },
               onBackToTopics = {
                 currentScreen = AppScreen.TOPICS
                 selectedTopicId = null
-                selectedSubtopicId = null
               }
             )
+            }
           } else {
             currentScreen = AppScreen.TOPICS
           }
@@ -388,7 +373,7 @@ fun SscCglPracticeApp(modifier: Modifier = Modifier) {
               onBackToTopics = {
                 currentScreen = AppScreen.TOPICS
                 selectedTopicId = null
-                selectedSubtopicId = null
+                subjectPracticeViewModel.clearTopicSelection()
               }
             )
           } else {
@@ -403,6 +388,7 @@ fun SscCglPracticeApp(modifier: Modifier = Modifier) {
               activeTestSourceScreen = AppScreen.MOCK_TEST_OVERVIEW
               customTestSelectedSubjects = listOf("reasoning", "gk_ga", "maths", "english")
               customTestIsTimed = true
+              testSessionViewModel.prepareMockTest()
               currentScreen = AppScreen.CUSTOM_TEST_RUN
             },
             onBack = {
@@ -439,6 +425,7 @@ fun SscCglPracticeApp(modifier: Modifier = Modifier) {
               activeTestSourceScreen = AppScreen.CUSTOM_TEST_SETUP
               customTestSelectedSubjects = selectedSubjects
               customTestIsTimed = isTimed
+              testSessionViewModel.prepareCustomTest(selectedSubjects, isTimed)
               currentScreen = AppScreen.CUSTOM_TEST_RUN
             },
             onBack = {
@@ -448,18 +435,27 @@ fun SscCglPracticeApp(modifier: Modifier = Modifier) {
           )
         }
         AppScreen.CUSTOM_TEST_RUN -> {
-          CustomTestScreen(
-            testTitle = activeTestTitle,
-            selectedSubjectIds = customTestSelectedSubjects,
-            isTimed = customTestIsTimed,
-            onTestFinished = { result ->
-              customTestResult = result
-              currentScreen = AppScreen.CUSTOM_TEST_RESULT
-            },
-            onExit = {
-              currentScreen = activeTestSourceScreen
+          if (testSessionState.isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+              CircularProgressIndicator(color = PrimaryBlue)
             }
-          )
+          } else {
+            CustomTestScreen(
+              testTitle = activeTestTitle,
+              selectedSubjectIds = customTestSelectedSubjects,
+              isTimed = customTestIsTimed,
+              questions = testSessionState.questions,
+              onTestFinished = { result ->
+                testSessionViewModel.recordResult(result) { savedResult ->
+                  customTestResult = savedResult
+                  currentScreen = AppScreen.CUSTOM_TEST_RESULT
+                }
+              },
+              onExit = {
+                currentScreen = activeTestSourceScreen
+              }
+            )
+          }
         }
         AppScreen.CUSTOM_TEST_RESULT -> {
           val res = customTestResult

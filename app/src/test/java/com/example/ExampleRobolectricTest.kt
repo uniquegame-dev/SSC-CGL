@@ -431,6 +431,7 @@ class ExampleRobolectricTest {
     repo.seedInitialQuestionsIfEmpty()
 
     val questions = repo.getQuestionsBySubjectAndTopicDirect("reasoning", "analogies")
+      .filter { it.contentKey.startsWith("seed_reasoning_analogy_") }
     assertEquals(5, questions.size)
 
     // Confirm Q1
@@ -443,7 +444,7 @@ class ExampleRobolectricTest {
     assertEquals(1, q1.correctOption)
     assertEquals("house rent कमाता है, capital interest कमाता है.", q1.explanation)
     assertEquals("analogies", q1.topicId)
-    assertEquals(null, q1.subtopicId)
+    assertEquals("sub_sem_ana", q1.subtopicId)
     assertEquals("EASY", q1.difficulty)
     assertEquals("Bundled seed", q1.sourceName)
     assertEquals(null, q1.year)
@@ -491,6 +492,7 @@ class ExampleRobolectricTest {
     // Test re-initialization causes no duplicates
     repo.seedInitialQuestionsIfEmpty()
     val recheck = repo.getQuestionsBySubjectAndTopicDirect("reasoning", "analogies")
+      .filter { it.contentKey.startsWith("seed_reasoning_analogy_") }
     assertEquals(5, recheck.size)
 
     inMemoryDb.close()
